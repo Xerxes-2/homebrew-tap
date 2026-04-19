@@ -59,8 +59,6 @@ class Steel < Formula
       system "cargo", "install", "-vv", *std_cargo_args(path: "crates/steel-language-server")
       system "cargo", "install", "-vv", *std_cargo_args(path: "crates/cargo-steel-lib")
 
-      ENV["STEEL_HOME"] = share/"steel"
-      system bin/"steel", "cogs/install.scm", "cogs"
     else
       binaries = {
         "steel-interpreter"     => "steel",
@@ -79,13 +77,10 @@ class Steel < Formula
           end
         end
       end
-
-      cd "source" do
-        ENV["STEEL_HOME"] = share/"steel"
-        system bin/"steel", "cogs/install.scm", "cogs"
-      end
     end
 
+    ENV["STEEL_HOME"] = share/"steel"
+    system bin/"steel", "cogs/install.scm", "cogs"
     generate_completions_from_executable(bin/"steel", "completions")
   end
 
