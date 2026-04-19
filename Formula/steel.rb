@@ -4,6 +4,7 @@ class Steel < Formula
   url "https://github.com/mattwparas/steel/releases/download/v0.8.2/steel-source.tar.gz"
   sha256 "3ba6a00631cf0dd32ff117003b57ee131c7ed423a8cc19438ea6d2806c1375b3"
   license any_of: ["Apache-2.0", "MIT"]
+  head "https://github.com/mattwparas/steel.git", branch: "master"
 
   depends_on "rust" => :build
 
@@ -52,28 +53,37 @@ class Steel < Formula
   end
 
   def install
-    binaries = {
-      "steel-interpreter"     => "steel",
-      "steel-forge"           => "forge",
-      "steel-language-server" => "steel-language-server",
-      "cargo-steel-lib"       => "cargo-steel-lib",
-    }
+    if build.head?
+      system "cargo", "install", "-vv", *std_cargo_args(path: "crates/steel-interpreter")
+      system "cargo", "install", "-vv", *std_cargo_args(path: "crates/steel-forge")
+      system "cargo", "install", "-vv", *std_cargo_args(path: "crates/steel-language-server")
+      system "cargo", "install", "-vv", *std_cargo_args(path: "crates/cargo-steel-lib")
 
-    binaries.each do |res_name, bin_name|
-      resource(res_name).stage do
-        dirs = Dir.glob("#{res_name}-*")
-        if dirs.any?
-          bin.install "#{dirs.first}/#{bin_name}"
-        else
-          bin.install bin_name
-        end
-      end
-    end
-
-    # Install cogs from source
-    cd "source" do
       ENV["STEEL_HOME"] = share/"steel"
       system bin/"steel", "cogs/install.scm", "cogs"
+    else
+      binaries = {
+        "steel-interpreter"     => "steel",
+        "steel-forge"           => "forge",
+        "steel-language-server" => "steel-language-server",
+        "cargo-steel-lib"       => "cargo-steel-lib",
+      }
+
+      binaries.each do |res_name, bin_name|
+        resource(res_name).stage do
+          dirs = Dir.glob("#{res_name}-*")
+          if dirs.any?
+            bin.install "#{dirs.first}/#{bin_name}"
+          else
+            bin.install bin_name
+          end
+        end
+      end
+
+      cd "source" do
+        ENV["STEEL_HOME"] = share/"steel"
+        system bin/"steel", "cogs/install.scm", "cogs"
+      end
     end
 
     generate_completions_from_executable(bin/"steel", "completions")
